@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -14,8 +15,8 @@
 </head>
 <body>
 
-<!-- Add Student -->
-<div class="modal fade" id="studentAddModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- Add Stock -->
+<div class="modal fade" id="stockAddModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
         <div class="modal-header">
@@ -53,7 +54,7 @@
     </div>
 </div>
 
-<!-- Edit Student Modal -->
+<!-- Edit Stock Modal -->
 <div class="modal fade" id="studentEditModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -92,7 +93,7 @@
     </div>
 </div>
 
-<!-- View Student Modal -->
+<!-- View Stock Modal -->
 <div class="modal fade" id="studentViewModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -133,7 +134,7 @@
                 <div class="card-header">
                     <h4>SHOE INVENTORY
                         
-                        <button type="button" class="btn btn-primary float-end" data-bs-toggle="modal" data-bs-target="#studentAddModal">
+                        <button type="button" class="btn btn-primary float-end" data-bs-toggle="modal" data-bs-target="#stockAddModal">
                             Add Stock
                         </button>
                     </h4>
@@ -153,6 +154,7 @@
                         </thead>
                         <tbody>
                         
+                          
                             
                         </tbody>
                     </table>
@@ -168,6 +170,88 @@
 
     <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
 
+    <script>
+        $(document).on('submit', '#saveStock', function (e) {
+            e.preventDefault();
 
+            var formData = new FormData(this);
+            formData.append("save_", true);
+
+            $.ajax({
+                type: "POST",
+                url: "code.php",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    
+                    var res = jQuery.parseJSON(response);
+                    if(res.status == 422) {
+                        $('#errorMessage').removeClass('d-none');
+                        $('#errorMessage').text(res.message);
+
+                    }else if(res.status == 200){
+
+                        $('#errorMessage').addClass('d-none');
+                        $('#stockAddModal').modal('hide');
+                        $('#saveStock')[0].reset();
+
+                        alertify.set('notifier','position', 'top-right');
+                        alertify.success(res.message);
+
+                        $('#myTable').load(location.href + " #myTable");
+
+                    }else if(res.status == 500) {
+                        alert(res.message);
+                    }
+                }
+            });
+
+        });
+
+        
+    </script>
+
+    <?php 
+            if(isset($_POST['save_student']))
+        {
+            $productName = mysqli_real_escape_string($con, $_POST['productName']);
+            $description = mysqli_real_escape_string($con, $_POST['description']);
+            $price = mysqli_real_escape_string($con, $_POST['price']);
+            $quantityInStock = mysqli_real_escape_string($con, $_POST['quantityInStock']);
+
+            if($productName == NULL || $description == NULL || $price == NULL || $quantityInStock == NULL)
+            {
+                $res = [
+                    'status' => 422,
+                    'message' => 'All fields are mandatory'
+                ];
+                echo json_encode($res);
+                return;
+            }
+
+            $query = "INSERT INTO product (productName,description,price,quantityInStock) VALUES ('$productName','$description','$price','$quantityInStock')";
+            $query_run = mysqli_query($con, $query);
+
+            if($query_run)
+            {
+                $res = [
+                    'status' => 200,
+                    'message' => 'Student Created Successfully'
+                ];
+                echo json_encode($res);
+                return;
+            }
+            else
+            {
+                $res = [
+                    'status' => 500,
+                    'message' => 'Student Not Created'
+                ];
+                echo json_encode($res);
+                return;
+            }
+        }
+    ?>
 </body>
 </html>
